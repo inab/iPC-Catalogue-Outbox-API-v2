@@ -4,18 +4,18 @@ var Keycloak = require('keycloak-connect');
 require('dotenv').config();
 
 var keycloakConfig = {
-        "realm": "IPC",
-        "auth-server-url": "https://inb.bsc.es/auth/",
-        "ssl-required": "external",
-        "resource": "ipc-outbox-api",
-        "verify-token-audience": true,
-        "public-client": true,
-        "credentials": {
-          "secret": process.env.KEYCLOAK_OUTBOX_CLIENT_SECRET
-        },
-        "use-resource-role-mappings": true,
-        "confidential-port": 0,
-        "policy-enforcer": {}
+    "realm": "IPC",
+    "auth-server-url": "https://inb.bsc.es/auth/",
+    "ssl-required": "external",
+    "resource": "ipc-outbox-api",
+    "verify-token-audience": true,
+    "public-client": true,
+    "credentials": {
+        "secret": process.env.KEYCLOAK_OUTBOX_CLIENT_SECRET
+    },
+    "use-resource-role-mappings": true,
+    "confidential-port": 0,
+    "policy-enforcer": {}
 }
 
 var memoryStore = new session.MemoryStore();
@@ -28,6 +28,15 @@ var sessionData = session({
     store: memoryStore
 });
 
+// User (tests): 
+const usrSettings = {
+    client_id: 'ipc-react-portal',
+    username: process.env.OUTBOX_USER_NAME,
+    password: process.env.OUTBOX_USER_PASS,
+    grant_type: 'password',
+    realmName: 'IPC'
+};
+
 var serverConf = {
     "port": 8085,
     "bodyLimit": "100kb",
@@ -37,5 +46,6 @@ var serverConf = {
 module.exports = {
     keycloak,
     sessionData,
-    serverConf
+    usrSettings,
+    serverConf,
 };
