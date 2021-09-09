@@ -1,15 +1,17 @@
 let MongoClient = require('mongodb').MongoClient
 let db;
-let host = process.env.MONGO_HOST_PERMISSIONS;	
-let permissions_db = process.env.MONGO_DB_PERMISSIONS;
+let host = process.env.NODE_ENV === 'test' ? process.env.MONGO_HOST_PERMISSIONS_TEST : process.env.MONGO_HOST_PERMISSIONS;
+let permissions_db = process.env.NODE_ENV === 'test' ? process.env.MONGO_DB_PERMISSIONS_TEST : process.env.MONGO_DB_PERMISSIONS;
 let username = process.env.MONGO_USER_PERMISSIONS;
 let password = process.env.MONGO_PASS_PERMISSIONS;
 let authSource = process.env.MONGO_AUTH_PERMISSIONS;
 
 MongoClient.connect(`mongodb://${username}:${password}@${host}/${permissions_db}?authSource=${authSource}`, function (err, client) {
   	if (err) throw err
-  	console.log("Permissions api: successfully connected")
-  	db = client.db('permissions_api')
+	console.log("Permissions api: successfully connected")
+	console.log("Permissions HOST: ", host)
+	console.log("Permissions DB: ", permissions_db)
+  	db = client.db(permissions_db)
 })
 
 const checkUserPermissions = async (id) => {
@@ -17,4 +19,24 @@ const checkUserPermissions = async (id) => {
 	return response
 }
 
+const postUserPermissions = async (id, assertions) => {
+	await db.collection('userPermissions').insertOne(
+		{ "sub" : id, 
+		  "assertions" : [{
+				"type": assertions.type,
+				"asserted": assertions.asserted,
+				"value": assertions.value,
+				"source": assertions.source,
+				"by": assertions.by
+			}]
+	})
+}
+
+const deleteUserPermissions = async (id) => {
+	await db.collection('userPermissions').deleteOne( { "sub" : id } )
+}
+
+
 exports.checkUserPermissions = checkUserPermissions
+exports.postUserPermissions = postUserPermissions
+exports.deleteUserPermissions = deleteUserPermissions
