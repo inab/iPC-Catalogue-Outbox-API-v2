@@ -72,19 +72,15 @@ const updateUserFiles = async (id, outbox, allowed) => {
 
 // 2.A. OUTBOX DB: INSERT DOCUMENT BY USERID -> UserFiles and FilesMetadata models.
 const postFileId = async (id, object) => {
+
     let response = await UserFiles.updateOne({ '_id' : id },
-                                       { $addToSet: { "fileIds" : object._id } }, 
-                                       { new: true, upsert: true })
+                                             { $addToSet: { "fileIds" : object._id, "analysis" : object.metadata.analysis }},
+                                             { new: true, upsert: true })                            
 
-    if(response.nModified === 1) {
-        await UserFiles.updateOne({ '_id' : id },
-                                  { $push: { "analysis" : object.metadata.analysis } }) 
-    }                                   
-
-    response = await FilesMetadata.updateOne(  { '_id' : object._id },
-                                       { $set: { "metadata.file_locator" : object.metadata.file_locator, 
-                                                 "metadata.es_index" : object.metadata.es_index } },
-                                       { new: true, upsert: true })
+    response = await FilesMetadata.updateOne({ '_id' : object._id },
+                                             { $set: {  "metadata.file_locator" : object.metadata.file_locator, 
+                                                        "metadata.es_index" : object.metadata.es_index } },
+                                             { new: true, upsert: true })
 
     return response
 }
@@ -118,7 +114,7 @@ const deleteFileById = async (id, fileId) => {
     await UserFiles.update({ '_id' : id }, { $unset: { [`analysis.${index}`] : 1 } })
     
     response = await UserFiles.update({ '_id' : id }, { $pull: { 'analysis' : null } }, { new: true })
-    
+
     return response
 }
 
