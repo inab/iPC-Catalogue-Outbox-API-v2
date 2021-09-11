@@ -9,6 +9,10 @@ const metadataSchema = new mongoose.Schema({
     es_index: {
         type: String,
         required: true
+    },
+    access: {
+        type: String,
+        required: true
     }
 });
 

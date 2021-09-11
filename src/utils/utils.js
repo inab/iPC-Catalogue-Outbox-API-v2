@@ -18,7 +18,9 @@ const getFilesId = async (id) => {
     const userObject = await UserFiles.find({ '_id' : id })
                                       .select({ '_id' : 0, 'sub' : 0 });
     
-    let filesId = userObject[0].fileIds; 
+    let filesId = []
+
+    if(userObject.length > 0) filesId = userObject[0].fileIds; 
 
     return filesId
 }
@@ -26,13 +28,17 @@ const getFilesId = async (id) => {
 // 1.C. OUTBOX DB: GET USER FILES METADATA.
 const getFilesMetadata = async (id) => {
 
-    let selection = '_id analysis metadata.file_locator metadata.es_index';
+    let selection = '_id analysis metadata.file_locator metadata.es_index metadata.access';
 
     let docs = await UserFiles.find({ '_id' : id })
                               .populate({ path: 'fileIds', select: selection });
 
-    const response = metadataBuilder(docs)
+    let response = [];
 
+    if(docs.length > 0){
+        response = metadataBuilder(docs)
+    }
+    
     return response
 }
 
@@ -46,6 +52,7 @@ const metadataBuilder = async (documents) => {
             metadata: {
                 es_index : item.metadata.es_index,
                 file_locator : item.metadata.file_locator,
+                access : item.metadata.access,
                 analysis : documents[0].analysis[index]
             }
         })
@@ -57,29 +64,64 @@ const metadataBuilder = async (documents) => {
 // 1.E. OUTBOX DB: FILTER FOR FILEIDS THAT HAVE BEEN REMOVED FROM PERMISSIONS DB.
 const updateUserFiles = async (id, outbox, allowed) => {
 
-    let allowedFileIds = allowed[0].assertions.map(el => el.value)
+    let outboxPublicDocs = [];
+    let outboxPublicFileIds = [];
+    let outboxPrivateDocs = [];
+    let outboxPrivateFileIds = [];
+    let permissionsPrivateFileIds = [];
+    let privateNotAllowed = [];
+    let privateAllowed = [];
 
-    let notAllowed = outbox.filter(el => !allowedFileIds.includes(el))
+    // First we get IDs from public datasets from Outbox-DB.
+    outboxPublicDocs = outbox.filter(el => el.metadata.access === 'public');
+    outboxPublicFileIds.push(outboxPublicDocs.map(el => el._id));
+    outboxPublicFileIds = outboxPublicFileIds.reduce((a, b) => a.concat(b), []);
+    // Then, the private datasets IDs from Outbox-DB.
+    outboxPrivateDocs = outbox.filter(el => el.metadata.access === 'private');
+    outboxPrivateFileIds.push(outboxPrivateDocs.map(el => el._id));
+    outboxPrivateFileIds = outboxPrivateFileIds.reduce((a, b) => a.concat(b), []);
+    
+    // Here we create a whitelist (allowed) and blacklist (not allowed) based on user Permissions.
+    if(allowed.length > 0){
+        // From Permissions-DB.
+        permissionsPrivateFileIds = allowed[0].assertions.map(el => el.value);
+        // Create an array with the forbidden IDs.
+        privateNotAllowed = outboxPrivateFileIds.filter(el => !permissionsPrivateFileIds.includes(el));
+        // And another array with the whitelisted private docs
+        privateAllowed = outboxPrivateDocs.filter(el => permissionsPrivateFileIds.includes(el._id));
+    } else {
+        privateNotAllowed = outboxPrivateFileIds;
+        privateAllowed = [];
+    }
+    
+    // Here we delete registered files for this specific user. 
+    await Promise.all(privateNotAllowed.map(async (item) => await deleteFileById(id, item)));
 
-    let del = await Promise.all(notAllowed.map(async (item) => await deleteFileById(id, item)));
-
-    let response = await getFilesMetadata(id);
+    // Finally, concatenate Public and Private allowed docs.
+    let response = privateAllowed.concat(outboxPublicDocs)
 
     return response;
 }
 
 // 2. POST:
 
-// 2.A. OUTBOX DB: INSERT DOCUMENT BY USERID -> UserFiles and FilesMetadata models.
+// 2.A. OUTBOX DB: INSERT DOCUMENT BY USERID -> UserFiles and FilesMetadata* models. *to be reviewed.
 const postFileId = async (id, object) => {
 
-    let response = await UserFiles.updateOne({ '_id' : id },
-                                             { $addToSet: { "fileIds" : object._id, "analysis" : object.metadata.analysis }},
-                                             { new: true, upsert: true })                            
+    let response = await UserFiles.find({ '_id' : id, 'fileIds' : object._id }); 
 
+    if(response.length === 0) {
+        await UserFiles.updateOne({ '_id' : id },
+                                  { $push: { "fileIds" : object._id, "analysis" : object.metadata.analysis } },
+                                  { new: true, upsert: true }) 
+    }  
+
+    // This fn must be reviewed: Users should not be able to interact with FilesMetadata collection (only sysadmin). 
+    // Instead, this data has to be present in advance in the Outbox-DB || fetched from ES.
     response = await FilesMetadata.updateOne({ '_id' : object._id },
                                              { $set: {  "metadata.file_locator" : object.metadata.file_locator, 
-                                                        "metadata.es_index" : object.metadata.es_index } },
+                                                        "metadata.es_index" : object.metadata.es_index,
+                                                        "metadata.access" : object.metadata.access } },
                                              { new: true, upsert: true })
 
     return response
