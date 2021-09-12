@@ -1,0 +1,69 @@
+version: 2.1
+
+workflows:
+  test-and-publish-outbox-API:
+    jobs:
+      - run-tests:
+          name: test-api
+      - hold:
+          type: approval
+          requires:
+            - test-api
+      - publish:
+          requires:
+            - test-api
+            - hold
+          filters:
+            branches:
+              only: master
+
+jobs:
+  run-tests:
+    docker:
+      - image: circleci/node:12.10
+      - image: mongo:4.4.5
+        command: [--auth]
+    steps:
+      - checkout
+      - run:
+          name: Install MongoDB Shell 4.4 for Ubuntu -> Admin user creation
+          command: |
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+            echo "deb [ arch=amd64 ] http://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+            sudo apt-get update
+            sudo apt-get install -y --force-yes mongodb-org-shell
+      - run:
+          name: chmod permissions
+          command: chmod -R 755 ./
+      - run:
+          name: Creating .env for Express App with CircleCI vars from script
+          command: |
+            ./setenv.sh > .env
+      - run:
+          name: Create admin user in MongoDB (testing environment)
+          command: |
+            mongo admin --eval "db.createUser({ user: '$MONGO_USER', pwd: '$MONGO_PASS', roles: [{ role: 'root', db: 'admin' }]})"
+      - run:
+          name: Install project dependencies
+          command: npm install .
+      - run:
+          name: Run tests with Jest
+          command: npm test
+  publish:
+    docker:
+      - image: cimg/node:16.4.1
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASS
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 19.03.13
+          docker_layer_caching: false
+      - run: 
+          command: | 
+            TAG=0.1.${CIRCLE_BUILD_NUM} 
+            docker build -f Dockerfile.production -t acavalls/ipc-outbox-api:$TAG -t acavalls/ipc-outbox-api:latest .
+            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+            docker push acavalls/ipc-outbox-api:$TAG
+            docker push acavalls/ipc-outbox-api:latest
