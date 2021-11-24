@@ -12,7 +12,7 @@ describe('Integration tests: Tokens', () => {
     describe('Keycloak token generation tests', () => {
         it('Check if user can get an access token from Keycloak', async () => {
             
-            let baseUrl = 'https://inb.bsc.es/auth/';
+            let baseUrl = process.env.KEYCLOAK_URL;
             let response;
     
             await tokenRequester(baseUrl, usrSettings).then((token) => {

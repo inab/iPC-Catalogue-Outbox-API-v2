@@ -1,7 +1,7 @@
 version: 2.1
 
 workflows:
-  test-and-publish-outbox-API:
+  test-and-publish-permissions-API:
     jobs:
       - run-tests:
           name: test-api
@@ -16,39 +16,29 @@ workflows:
           filters:
             branches:
               only: master
-
 jobs:
   run-tests:
-    docker:
-      - image: circleci/node:12.10
-      - image: mongo:4.4.5
-        command: [--auth]
+    machine:
+      image: ubuntu-1604:202007-01
     steps:
       - checkout
       - run:
-          name: Install MongoDB Shell 4.4 for Ubuntu -> Admin user creation
+          name: Build images
           command: |
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
-            echo "deb [ arch=amd64 ] http://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
-            sudo apt-get update
-            sudo apt-get install -y --force-yes mongodb-org-shell
+            docker-compose -f docker-compose.tests.yml build
       - run:
-          name: chmod permissions
-          command: chmod -R 755 ./
-      - run:
-          name: Creating .env for Express App with CircleCI vars from script
+          name: Build KEYCLOAK
           command: |
-            ./setenv.sh > .env
+            docker-compose -f docker-compose.tests.yml --env-file .env-tests up -d keycloak
+            sleep 20
       - run:
-          name: Create admin user in MongoDB (testing environment)
+          name: Build MONGO
           command: |
-            mongo admin --eval "db.createUser({ user: '$MONGO_USER', pwd: '$MONGO_PASS', roles: [{ role: 'root', db: 'admin' }]})"
+            docker-compose -f docker-compose.tests.yml --env-file .env-tests up -d mongo
+            sleep 20
       - run:
-          name: Install project dependencies
-          command: npm install .
-      - run:
-          name: Run tests with Jest
-          command: npm test
+          name: Run Tests
+          command: docker-compose -f docker-compose.tests.yml run outbox-api npm test
   publish:
     docker:
       - image: cimg/node:16.4.1

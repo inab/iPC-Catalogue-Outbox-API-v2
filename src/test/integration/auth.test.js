@@ -25,7 +25,7 @@ describe('Integration tests: AuthN/Z', () => {
     }
 
     beforeEach(async() => {
-        baseUrl = 'https://inb.bsc.es/auth/';
+        baseUrl = process.env.KEYCLOAK_URL;
         usrToken = await tokenRequester(baseUrl, usrSettings);
     });
 

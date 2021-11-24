@@ -10,7 +10,7 @@ describe('Integration tests: Routes', () => {
 
     let baseUrl;
     let usrToken;
-    let testId = "693be0a5-c215-480f-8105-3b3a7b16178e";
+    let testId = "42a55fa0-18e9-482b-8619-3d7caa757ac9";
     let invalidId = 12345;
 
     // Permissions-API: Mocking interaction between Data Access Committee portal AND Permissions API (Assertions will be directly inserted in the test Permissions-DB).
@@ -102,7 +102,7 @@ describe('Integration tests: Routes', () => {
     }
 
     beforeEach(async() => {
-        baseUrl = 'https://inb.bsc.es/auth/';
+        baseUrl = process.env.KEYCLOAK_URL;
         usrToken = await tokenRequester(baseUrl, usrSettings);
     });
 
@@ -227,7 +227,6 @@ describe('Integration tests: Routes', () => {
 
             response = await queryBuilder(usrToken, 3, userFilesOnlyAllowed)
             
-            await queryBuilder(usrToken, 1)
             expect(response.status).toBe(200);
             expect(response.body.nModified).toEqual(1);
         });

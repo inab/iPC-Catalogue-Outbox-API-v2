@@ -1,10 +1,10 @@
 let MongoClient = require('mongodb').MongoClient
 let db;
-let host = process.env.NODE_ENV === 'test' ? process.env.MONGO_HOST_PERMISSIONS_TEST : process.env.MONGO_HOST_PERMISSIONS;
+let host = process.env.NODE_ENV === 'test' ? process.env.MONGO_HOST_TEST : process.env.MONGO_HOST;
 let permissions_db = process.env.NODE_ENV === 'test' ? process.env.MONGO_DB_PERMISSIONS_TEST : process.env.MONGO_DB_PERMISSIONS;
-let username = process.env.MONGO_USER_PERMISSIONS;
-let password = process.env.MONGO_PASS_PERMISSIONS;
-let authSource = process.env.MONGO_AUTH_PERMISSIONS;
+let username = process.env.MONGO_USER;
+let password = process.env.MONGO_PASS;
+let authSource = process.env.MONGO_AUTH;
 
 MongoClient.connect(`mongodb://${username}:${password}@${host}/${permissions_db}?authSource=${authSource}`, function (err, client) {
   	if (err) throw err

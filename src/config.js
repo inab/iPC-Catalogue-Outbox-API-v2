@@ -5,7 +5,7 @@ require('dotenv').config();
 
 var keycloakConfig = {
     "realm": "IPC",
-    "auth-server-url": "https://inb.bsc.es/auth/",
+    "auth-server-url": process.env.KEYCLOAK_URL,
     "ssl-required": "external",
     "resource": "ipc-outbox-api",
     "verify-token-audience": true,
@@ -31,8 +31,8 @@ var sessionData = session({
 // User (tests): 
 const usrSettings = {
     client_id: 'ipc-react-portal',
-    username: process.env.OUTBOX_USER_NAME,
-    password: process.env.OUTBOX_USER_PASS,
+    username: process.env.REGULAR_USER_NAME,
+    password: process.env.REGULAR_USER_PASS,
     grant_type: 'password',
     realmName: 'IPC'
 };
