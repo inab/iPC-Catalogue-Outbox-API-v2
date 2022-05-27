@@ -5,8 +5,9 @@ let permissions_db = process.env.NODE_ENV === 'test' ? process.env.MONGO_DB_PERM
 let username = process.env.MONGO_USER;
 let password = process.env.MONGO_PASS;
 let authSource = process.env.MONGO_AUTH;
+let replicaSet = process.env.MONGO_REPLICASET;
 
-MongoClient.connect(`mongodb://${username}:${password}@${host}/${permissions_db}?authSource=${authSource}`, function (err, client) {
+MongoClient.connect(`mongodb://${username}:${password}@${host}/${permissions_db}?connectTimeoutMS=300000&replicaSet=${replicaSet}&authSource=${authSource}`, function (err, client) {
   	if (err) throw err
 	console.log("Permissions api: successfully connected")
 	console.log("Permissions HOST: ", host)
