@@ -62,7 +62,7 @@ services:
       start_period: 30s
     command: "--bind_ip_all --keyFile /opt/keyfile/keyfile --replSet rs0"
     networks:
-      private-network:
+      dac-network:
         ipv4_address: 172.21.0.10
 networks:
   dac-network:
