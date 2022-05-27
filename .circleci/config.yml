@@ -34,11 +34,15 @@ jobs:
       - run:
           name: Build MONGO
           command: |
+            sudo chmod 400 keyfile
+            sudo chown 999:999 keyfile
             docker-compose -f docker-compose.tests.yml --env-file .env-tests up -d mongo
             sleep 20
       - run:
           name: Run Tests
-          command: docker-compose -f docker-compose.tests.yml run outbox-api npm test
+          command: | 
+            sudo chmod -R 777 ./
+            docker-compose -f docker-compose.tests.yml run outbox-api npm test
   publish:
     docker:
       - image: cimg/node:16.4.1
