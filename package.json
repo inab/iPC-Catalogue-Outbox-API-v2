@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "NODE_ENV=dev nodemon -w src --exec \"babel-node src/index.js\"",
     "build": "babel src/ --out-dir dist",
-    "serve": "node dist/index.js",
+    "serve": "NODE_ENV=prod node dist/index.js",
     "test": "NODE_ENV=test jest --verbose --runInBand --forceExit"
   },
   "eslintConfig": {
