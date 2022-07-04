@@ -1,7 +1,7 @@
 version: 2.1
 
 workflows:
-  test-and-publish-permissions-API:
+  test-and-publish-outbox-API:
     jobs:
       - run-tests:
           name: test-api
@@ -77,7 +77,7 @@ jobs:
       - run: 
           command: | 
             TAG=0.1.${CIRCLE_BUILD_NUM} 
-            docker build -f Dockerfile.production -t acavalls/ipc-permissions-api:$TAG -t acavalls/ipc-permissions-api:latest .
+            docker build -f Dockerfile.production -t acavalls/ipc-outbox-api:$TAG -t acavalls/ipc-outbox-api:latest .
             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-            docker push acavalls/ipc-permissions-api:$TAG
-            docker push acavalls/ipc-permissions-api:latest
+            docker push acavalls/ipc-outbox-api:$TAG
+            docker push acavalls/ipc-outbox-api:latest
