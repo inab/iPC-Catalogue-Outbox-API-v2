@@ -153,11 +153,11 @@ const deleteFileById = async (id, fileId) => {
     
     if(remove.nModified === 0) return response 
 
-    await UserFiles.update({ '_id' : id }, { $unset: { [`analysis.${index}`] : 1 } })
+    await UserFiles.updateOne({ '_id' : id }, { $unset: { [`analysis.${index}`] : 1 } })
     
-    response = await UserFiles.update({ '_id' : id }, { $pull: { 'analysis' : null } }, { new: true })
+    response = await UserFiles.updateOne({ '_id' : id }, { $pull: { 'analysis' : null } }, { new: true })
 
     return response
 }
 
-export { getFilesId, getUserPermissions, getFilesMetadata, postFileId, deleteFileById }
+export { getFilesId, getUserPermissions, getFilesMetadata, postFileId, deleteFileById, updateUserFiles }
