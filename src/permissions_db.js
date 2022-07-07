@@ -39,7 +39,4 @@ const deleteUserPermissions = async (id) => {
 	await db.collection('userPermissions').deleteOne( { "sub" : id } )
 }
 
-
-exports.checkUserPermissions = checkUserPermissions
-exports.postUserPermissions = postUserPermissions
-exports.deleteUserPermissions = deleteUserPermissions
+export { checkUserPermissions, postUserPermissions, deleteUserPermissions }

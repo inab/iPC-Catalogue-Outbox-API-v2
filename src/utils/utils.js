@@ -160,9 +160,4 @@ const deleteFileById = async (id, fileId) => {
     return response
 }
 
-exports.getFilesId = getFilesId;
-exports.getUserPermissions = getUserPermissions;
-exports.getFilesMetadata = getFilesMetadata;
-exports.updateUserFiles = updateUserFiles;
-exports.postFileId = postFileId;
-exports.deleteFileById = deleteFileById;
+export { getFilesId, getUserPermissions, getFilesMetadata, postFileId, deleteFileById }

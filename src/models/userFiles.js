@@ -29,5 +29,4 @@ function validate(bodyObject){
     return schema.validate(bodyObject);
 }
 
-exports.UserFiles = UserFiles;
-exports.validate = validate;
+export { UserFiles, validate }

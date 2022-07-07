@@ -26,4 +26,4 @@ const filesMetadataSchema = new mongoose.Schema({
 
 const FilesMetadata = mongoose.model('filesMetadata', filesMetadataSchema);
 
-exports.FilesMetadata = FilesMetadata;
+export { FilesMetadata }
