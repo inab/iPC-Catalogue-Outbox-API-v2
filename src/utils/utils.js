@@ -84,7 +84,7 @@ const updateUserFiles = async (id, outbox, allowed) => {
     // Here we create a whitelist (allowed) and blacklist (not allowed) based on user Permissions.
     if(allowed.length > 0){
         // From Permissions-DB.
-        permissionsPrivateFileIds = allowed[0].assertions.map(el => el.value);
+        permissionsPrivateFileIds = allowed[0].assertions.map(el => el.value.split(":").pop());
         // Create an array with the forbidden IDs.
         privateNotAllowed = outboxPrivateFileIds.filter(el => !permissionsPrivateFileIds.includes(el));
         // And another array with the whitelisted private docs
